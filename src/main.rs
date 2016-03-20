@@ -5,6 +5,7 @@ extern crate clap;
 extern crate iron;
 extern crate logger;
 
+mod router;
 mod server;
 
 use ansi_term::Style;
