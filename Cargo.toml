@@ -1,5 +1,5 @@
 [package]
-name = "ardite"
+name = "ardite-rest"
 version = "0.1.0"
 description = "Ardite service providing a RESTful interface over HTTP."
 keywords = ["ardite", "rest"]
@@ -10,6 +10,7 @@ readme = "README.md"
 
 [dependencies]
 ansi_term = "0.7.2"
+ardite = { path = "../ardite-core" }
 clap = "2.2.1"
 iron = "0.3.0"
 logger = "0.0.3"
