@@ -7,6 +7,6 @@ authors = ["Caleb Meredith <calebmeredith8@gmail.com>"]
 license = "MIT"
 repository = "ardite/ardite-rest"
 readme = "README.md"
-build = "build.rs"
 
 [dependencies]
+clap = "2.2.1"
