@@ -1,0 +1,12 @@
+[package]
+name = "ardite"
+version = "0.1.0"
+description = "Ardite service providing a RESTful interface over HTTP."
+keywords = ["ardite", "rest"]
+authors = ["Caleb Meredith <calebmeredith8@gmail.com>"]
+license = "MIT"
+repository = "ardite/ardite-rest"
+readme = "README.md"
+build = "build.rs"
+
+[dependencies]
