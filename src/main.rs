@@ -1,4 +1,5 @@
 extern crate ansi_term;
+extern crate ardite;
 #[macro_use(crate_version)]
 extern crate clap;
 extern crate iron;
