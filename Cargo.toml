@@ -8,9 +8,12 @@ license = "MIT"
 repository = "ardite/ardite-rest"
 readme = "README.md"
 
+[features]
+default = ["ardite/error_iron"]
+
 [dependencies]
 ansi_term = "0.7.2"
-ardite = { path = "../ardite-core", features = ["error_iron"] }
+ardite = { path = "../ardite-core" }
 clap = "2.2.1"
 iron = "0.3.0"
 logger = "0.0.3"
