@@ -8,13 +8,30 @@ extern crate logger;
 mod router;
 mod server;
 
+use std::path::PathBuf;
+
+use ansi_term::Colour::Red;
 use ansi_term::Style;
+use ardite::Service;
 use clap::{App, Arg};
 use clap::AppSettings::UnifiedHelpMessage;
 use iron::{Iron, Chain};
 use logger::Logger;
 
 use server::Server;
+
+macro_rules! handle_err {
+  ($expr:expr) => {
+    match $expr {
+      Ok(value) => value,
+      Err(error) => {
+        println!("\n{}", Red.bold().paint("Error:"));
+        println!("{}\n", error);
+        return ();
+      }
+    }
+  }
+}
 
 fn main() {
   let matches = {
@@ -25,14 +42,19 @@ fn main() {
     .version_short("v")
     .setting(UnifiedHelpMessage)
     .args(&[
+      Arg::with_name("schema").takes_value(true).required(true).default_value("ardite.yml").value_name("FILE").help("The Ardite schema file to be used"),
       Arg::with_name("hostname").long("hostname").short("n").takes_value(true).default_value("localhost").value_name("STRING").help("The host name that the server will listen on"),
       Arg::with_name("port").long("port").short("p").takes_value(true).default_value("3001").value_name("PORT").help("The port that the server will listen on")
     ])
     .get_matches()
   };
 
+  let schema = matches.value_of("schema").unwrap();
+
+  let service = handle_err!(Service::from_file(PathBuf::from(schema)));
+
   let hostname = matches.value_of("hostname").unwrap();
-  let port = matches.value_of("port").unwrap().parse::<u16>().unwrap();
+  let port = handle_err!(matches.value_of("port").unwrap().parse::<u16>());
 
   let server = Server;
 
@@ -48,5 +70,5 @@ fn main() {
     Style::new().underline().paint(format!("http://{}:{}", hostname, port))
   );
 
-  Iron::new(chain).http((hostname, port)).unwrap();
+  handle_err!(Iron::new(chain).http((hostname, port)));
 }
