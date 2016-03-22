@@ -6,7 +6,7 @@ pub enum Route {
   /// The top level route. Generally it returns some meta information.
   Root,
   /// A route representing the lack of any other route.
-  None
+  Nothing
 }
 
 impl Route {
@@ -17,15 +17,16 @@ impl Route {
 
   /// Resolve a route from a path relative to another route.
   pub fn resolve(self, mut path: Vec<String>) -> Self {
-    use router::Route::*;
+    use self::Route::*;
 
-    if path.len() == 0 {
-      return self;
-    }
+    let part = match path.pop() {
+      Some(part) => part,
+      None => { return self; }
+    };
 
-    match (self, path.pop().unwrap().as_str()) {
+    match (self, part.as_str()) {
       (Root, "") => Root.resolve(path),
-      _ => None
+      _ => Nothing
     }
   }
 }
