@@ -1,3 +1,4 @@
+use ardite::Service;
 use ardite::error::{Error, MethodNotAllowed};
 use iron::prelude::*;
 use iron::headers::{ContentType, ContentLength};
@@ -9,9 +10,11 @@ use iron::Handler;
 
 use router::Route;
 
-pub struct Server;
+pub struct RestServer {
+  service: Service
+}
 
-impl Handler for Server {
+impl Handler for RestServer {
   fn handle(&self, req: &mut Request) -> IronResult<Response> {
     match (Route::resolve_from_root(req.url.path.clone()), &req.method) {
       (Route::Root, &Get) => {

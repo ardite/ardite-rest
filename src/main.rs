@@ -18,7 +18,7 @@ use clap::AppSettings::UnifiedHelpMessage;
 use iron::{Iron, Chain};
 use logger::Logger;
 
-use server::Server;
+use server::RestServer;
 
 macro_rules! handle_err {
   ($expr:expr) => {
@@ -53,10 +53,9 @@ fn main() {
 
   let service = handle_err!(Service::from_file(PathBuf::from(schema)));
 
-  let hostname = matches.value_of("hostname").unwrap();
-  let port = handle_err!(matches.value_of("port").unwrap().parse::<u16>());
-
-  let server = Server;
+  let server = RestServer {
+    service: service
+  };
 
   let mut chain = Chain::new(server);
 
@@ -64,6 +63,9 @@ fn main() {
 
   chain.link_before(logger_before);
   chain.link_after(logger_after);
+
+  let hostname = matches.value_of("hostname").unwrap();
+  let port = handle_err!(matches.value_of("port").unwrap().parse::<u16>());
 
   println!(
     "REST server listening on {}",
