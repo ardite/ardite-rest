@@ -9,22 +9,21 @@ extern crate logger;
 #[macro_use]
 extern crate mime;
 
-mod case;
-mod router;
+mod resource;
 mod server;
 
 use std::path::PathBuf;
 
 use ansi_term::Colour::Red;
 use ansi_term::Style;
+use ardite::case::Case;
 use ardite::Service;
 use clap::{App, Arg};
 use clap::AppSettings::UnifiedHelpMessage;
 use iron::{Iron, Chain, Url};
 use logger::Logger;
 
-use case::Case;
-use server::RestServer;
+use server::Server;
 
 macro_rules! handle_err {
   ($expr:expr) => {
@@ -50,16 +49,21 @@ fn main() {
       Arg::with_name("schema").takes_value(true).required(true).default_value("ardite.yml").value_name("FILE").help("The Ardite schema file to be used"),
       Arg::with_name("hostname").long("hostname").short("n").takes_value(true).default_value("localhost").value_name("STRING").help("The host name that the server will listen on"),
       Arg::with_name("port").long("port").short("p").takes_value(true).default_value("3001").value_name("PORT").help("The port that the server will listen on"),
-      Arg::with_name("mount").long("mount").short("m").takes_value(true).value_name("URL").help("All reported URLs will have this as the prefix"),
-      Arg::with_name("case").long("case").short("c").takes_value(true).possible_values(&["camel", "snake", "kebab"]).default_value("kebab").value_name("CASE").help("The default case that the API will use, may be overrided with the `Prefer` header")
+      Arg::with_name("mount").long("mount").short("m").takes_value(true).value_name("URL").help("All reported URLs will use the provided URL as their root"),
+      Arg::with_name("case").long("case").short("c").takes_value(true).possible_values(&["camel", "snake", "kebab", "same"]).default_value("kebab").value_name("CASE").help("The default case that the API will use, may be overrided with the `Prefer` header")
     ])
     .get_matches()
   };
 
   let schema_path = PathBuf::from(matches.value_of("schema").unwrap());
   let service = handle_err!(Service::from_file(schema_path.clone()));
+
+  println!(
+    "Loaded schema from {}",
+    Style::new().underline().paint(format!("{}", schema_path.display()))
+  );
+
   let mount_url = matches.value_of("mount").map(|url| handle_err!(Url::parse(url)));
-  let default_case = Case::from_str(matches.value_of("case").unwrap()).unwrap();
 
   // Some properties on URL is not allowed, so throw some errors.
   if let Some(ref mount_url) = mount_url {
@@ -69,14 +73,20 @@ fn main() {
     if mount_url.fragment.is_some() { handle_err!(Err(format!("Fragment not allowed in mount URL '{}'.", mount_url))); }
   }
 
-  println!(
-    "Loaded schema from {}",
-    Style::new().underline().paint(format!("{}", schema_path.display()))
-  );
+  let hostname = matches.value_of("hostname").unwrap();
+  let port = handle_err!(matches.value_of("port").unwrap().parse::<u16>());
 
-  let server = RestServer {
+  let mut root_url = mount_url.unwrap_or(Url::parse(&format!("http://{}:{}", hostname, port)).unwrap());
+
+  if root_url.path == vec![""] {
+    root_url.path = vec![];
+  }
+
+  let default_case = Case::from_str(matches.value_of("case").unwrap()).unwrap();
+
+  let server = Server {
     service: service,
-    mount_url: mount_url,
+    root_url: root_url,
     default_case: default_case
   };
 
@@ -86,9 +96,6 @@ fn main() {
 
   chain.link_before(logger_before);
   chain.link_after(logger_after);
-
-  let hostname = matches.value_of("hostname").unwrap();
-  let port = handle_err!(matches.value_of("port").unwrap().parse::<u16>());
 
   println!(
     "REST server listening on {}",

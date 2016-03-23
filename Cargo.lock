@@ -36,6 +36,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "ardite"
 version = "0.0.1"
 dependencies = [
+ "Inflector 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 0.1.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "linear-map 1.0.0 (git+https://github.com/calebmer/linear-map)",
  "regex 0.1.58 (registry+https://github.com/rust-lang/crates.io-index)",
