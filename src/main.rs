@@ -50,7 +50,7 @@ fn main() {
       Arg::with_name("hostname").long("hostname").short("n").takes_value(true).default_value("localhost").value_name("STRING").help("The host name that the server will listen on"),
       Arg::with_name("port").long("port").short("p").takes_value(true).default_value("3001").value_name("PORT").help("The port that the server will listen on"),
       Arg::with_name("mount").long("mount").short("m").takes_value(true).value_name("URL").help("All reported URLs will use the provided URL as their root"),
-      Arg::with_name("case").long("case").short("c").takes_value(true).possible_values(&["camel", "snake", "kebab", "same"]).default_value("kebab").value_name("CASE").help("The default case that the API will use, may be overrided with the `Prefer` header")
+      Arg::with_name("case").long("case").short("c").takes_value(true).possible_values(&["camel", "snake", "kebab", "class", "screaming", "same"]).default_value("kebab").value_name("CASE").help("The default case that the API will use, may be overrided with the `Prefer` header")
     ])
     .get_matches()
   };
@@ -82,7 +82,7 @@ fn main() {
     root_url.path = vec![];
   }
 
-  let default_case = Case::from_str(matches.value_of("case").unwrap()).unwrap();
+  let default_case = Case::from_name(matches.value_of("case").unwrap()).unwrap();
 
   let server = Server {
     service: service,

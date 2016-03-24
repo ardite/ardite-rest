@@ -1,5 +1,5 @@
 use ardite::Service;
-use ardite::case::{Case, Kebab};
+use ardite::case::{Case, Kebab, Same};
 use ardite::error::{Error, MethodNotAllowed};
 use iron::prelude::*;
 use iron::headers::{ContentType, ContentLength};
@@ -67,7 +67,7 @@ impl Handler for Server {
 
     match result {
       Ok(value) => {
-        let mut content = value.keys_to_case(case).to_json_pretty().unwrap();
+        let mut content = if case == &Same { value } else { value.keys_to_case(case) }.to_json_pretty().unwrap();
         content.push_str("\n");
 
         let mut res = Response::new();
