@@ -27,7 +27,7 @@ impl Resource for Root {
 
     for (name, _) in service.types() {
       let mut key = name.clone();
-      key.push_str("_url");
+      key.push_str("_collection_url");
       let value = value!(format!("{}", create_url(vec![name.clone()])));
       object.insert(key, value);
     }
