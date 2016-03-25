@@ -4,7 +4,7 @@ pub mod type_;
 use ardite::Service;
 use ardite::error::{Error, MethodNotAllowed};
 use ardite::schema::Definition;
-use ardite::value::Value;
+use ardite::value::{Value, Iter};
 use iron::Url;
 use urlencoded::QueryMap;
 
@@ -19,23 +19,51 @@ pub trait Resource {
   /// Modify self using the query.
   fn query(&mut self, _: &QueryMap) {}
 
-  fn get(&self, _: &Fn(Vec<String>) -> Url, _: &Service) -> Result<Value, Error> {
+  fn get(&self, _: &Fn(Vec<String>) -> Url, _: &Service) -> Result<Data, Error> {
     Err(Error::new(MethodNotAllowed, "Cannot perform a GET request to this resource."))
   }
 
-  fn post(&self, _: &Fn(Vec<String>) -> Url, _: &Service) -> Result<Value, Error> {
+  fn post(&self, _: &Fn(Vec<String>) -> Url, _: &Service) -> Result<Data, Error> {
     Err(Error::new(MethodNotAllowed, "Cannot perform a POST request to this resource."))
   }
 
-  fn put(&self, _: &Fn(Vec<String>) -> Url, _: &Service) -> Result<Value, Error> {
+  fn put(&self, _: &Fn(Vec<String>) -> Url, _: &Service) -> Result<Data, Error> {
     Err(Error::new(MethodNotAllowed, "Cannot perform a PUT request to this resource."))
   }
 
-  fn patch(&self, _: &Fn(Vec<String>) -> Url, _: &Service) -> Result<Value, Error> {
+  fn patch(&self, _: &Fn(Vec<String>) -> Url, _: &Service) -> Result<Data, Error> {
     Err(Error::new(MethodNotAllowed, "Cannot perform a PATCH request to this resource."))
   }
 
-  fn delete(&self, _: &Fn(Vec<String>) -> Url, _: &Service) -> Result<Value, Error> {
+  fn delete(&self, _: &Fn(Vec<String>) -> Url, _: &Service) -> Result<Data, Error> {
     Err(Error::new(MethodNotAllowed, "Cannot perform a DELETE request to this resource."))
+  }
+}
+
+// TODO: doc
+pub enum Data {
+  None,
+  Value(Value),
+  Stream(Iter)
+}
+
+impl From<()> for Data {
+  #[inline]
+  fn from(_: ()) -> Self {
+    Data::None
+  }
+}
+
+impl From<Value> for Data {
+  #[inline]
+  fn from(value: Value) -> Self {
+    Data::Value(value)
+  }
+}
+
+impl From<Iter> for Data {
+  #[inline]
+  fn from(iter: Iter) -> Self {
+    Data::Stream(iter)
   }
 }

@@ -4,7 +4,7 @@ use ardite::value::{Value, Object};
 use inflections::Inflect;
 use iron::Url;
 
-use resource::Resource;
+use resource::{Resource, Data};
 use resource::type_::Type;
 
 pub struct Root;
@@ -22,7 +22,7 @@ impl Resource for Root {
   /// Such top level URLs contain:
   ///
   /// - URLs for type collections.
-  fn get(&self, create_url: &Fn(Vec<String>) -> Url, service: &Service) -> Result<Value, Error> {
+  fn get(&self, create_url: &Fn(Vec<String>) -> Url, service: &Service) -> Result<Data, Error> {
     let mut object = Object::new();
 
     for (name, _) in service.types() {
@@ -32,6 +32,6 @@ impl Resource for Root {
       object.insert(key, value);
     }
 
-    Ok(Value::Object(object))
+    Ok(Value::Object(object).into())
   }
 }

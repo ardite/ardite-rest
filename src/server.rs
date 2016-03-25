@@ -1,4 +1,5 @@
-use ardite::{Service, Value};
+use ardite::Service;
+use ardite::value::Value;
 use ardite::error::{Error, MethodNotAllowed};
 use inflections::Inflect;
 use iron::prelude::*;
@@ -10,7 +11,7 @@ use iron::{Handler, Url};
 use urlencoded::{UrlEncodedQuery, EmptyQuery};
 
 use case::Case;
-use resource::Resource;
+use resource::{Resource, Data};
 use resource::root::Root;
 
 pub struct Server {
@@ -39,7 +40,7 @@ impl Server {
   }
 
   /// Handles taking a request and turning it into a `Result<Value, Error>.`
-  fn handle(&self, req: &mut Request) -> Result<Value, Error> {
+  fn handle(&self, req: &mut Request) -> Result<Data, Error> {
     let mut path = req.url.path.clone();
     let create_url = &|path| self.create_url(path);
 
@@ -49,34 +50,31 @@ impl Server {
       path = vec![];
     }
 
-    match self.route(path) {
-      Some(mut resource) => {
-        // Get the query parameters and mutate the resource with it.
-        match req.get_ref::<UrlEncodedQuery>() {
-          Ok(ref query) => { resource.query(query); },
-          Err(ref error) => {
-            match error {
-              &EmptyQuery => {},
-              error @ _ => { return Err(Error::invalid(format!("{}", error), "Try fixing your query syntax.")); }
-            };
-          }
-        };
+    let mut resource = try!(self.route(path).ok_or(
+      Error::not_found(format!("Resource '{}' not found.", self.create_url(req.url.path.clone())))
+      .set_hint("Check the root resource for available top level paths.")
+    ));
 
-        match &req.method {
-          &method::Get => resource.get(create_url, &self.service),
-          &method::Post => resource.post(create_url, &self.service),
-          &method::Put => resource.put(create_url, &self.service),
-          &method::Patch => resource.patch(create_url, &self.service),
-          &method::Delete => resource.delete(create_url, &self.service),
-          method @ _ => Err(
-            Error::new(MethodNotAllowed, format!("Cannot perform a {} request on any resource in this API.", method))
-            .set_hint("Try a HEAD, GET, POST, PUT, PATCH, or DELETE request instead.")
-          )
-        }
-      },
-      None => Err(
-        Error::not_found(format!("Resource '{}' not found.", self.create_url(req.url.path.clone())))
-        .set_hint("Check the root resource for available top level paths.")
+    // Get the query parameters and mutate the resource with it.
+    match req.get_ref::<UrlEncodedQuery>() {
+      Ok(ref query) => { resource.query(query); },
+      Err(ref error) => {
+        match error {
+          &EmptyQuery => {},
+          error @ _ => { return Err(Error::invalid(format!("{}", error), "Try fixing your query syntax.")); }
+        };
+      }
+    };
+
+    match &req.method {
+      &method::Get => resource.get(create_url, &self.service),
+      &method::Post => resource.post(create_url, &self.service),
+      &method::Put => resource.put(create_url, &self.service),
+      &method::Patch => resource.patch(create_url, &self.service),
+      &method::Delete => resource.delete(create_url, &self.service),
+      method @ _ => Err(
+        Error::new(MethodNotAllowed, format!("Cannot perform a {} request on any resource in this API.", method))
+        .set_hint("Try a HEAD, GET, POST, PUT, PATCH, or DELETE request instead.")
       )
     }
   }
@@ -88,18 +86,38 @@ impl Handler for Server {
     let case = &self.default_case;
 
     match self.handle(req) {
-      Ok(value) => {
-        let mut content = value_keys_to_case(value, case).to_json_pretty().unwrap();
-        content.push_str("\n");
+      Ok(data) => {
+        match data {
+          Data::None => Ok(Response::new().set(Status::Ok)),
+          Data::Value(value) => {
+            let mut content = value_keys_to_case(value, case).to_json_pretty().unwrap();
+            content.push_str("\n");
 
-        let mut res = Response::new();
+            let mut res = Response::new();
 
-        res.set_mut(Status::Ok);
-        res.set_mut(Header(ContentType(mime!(Application/Json; Charset=Utf8))));
-        res.set_mut(Header(ContentLength(content.len() as u64)));
-        res.set_mut(content);
+            res.set_mut(Status::Ok);
+            res.set_mut(Header(ContentType(mime!(Application/Json; Charset=Utf8))));
+            res.set_mut(Header(ContentLength(content.len() as u64)));
+            res.set_mut(content);
 
-        Ok(res)
+            Ok(res)
+          },
+          // TODO: actually stream this…
+          Data::Stream(iter) => {
+            let array = Value::Array(iter.map(|value| value_keys_to_case(value, case)).collect());
+            let mut content = array.to_json_pretty().unwrap();
+            content.push_str("\n");
+
+            let mut res = Response::new();
+
+            res.set_mut(Status::Ok);
+            res.set_mut(Header(ContentType(mime!(Application/Json; Charset=Utf8))));
+            res.set_mut(Header(ContentLength(content.len() as u64)));
+            res.set_mut(content);
+
+            Ok(res)
+          }
+        }
       },
       Err(error) => {
         let mut content = error.to_value().to_json_pretty().unwrap();
