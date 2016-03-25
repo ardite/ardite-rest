@@ -16,4 +16,4 @@ inflections = "1.0.0"
 iron = "0.3.0"
 logger = "0.0.3"
 mime = "0.2.0"
-urlencoded = { git = "https://github.com/calebmer/urlencoded.git" }
+urlencoded = "0.3.0"
