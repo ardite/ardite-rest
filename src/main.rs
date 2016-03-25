@@ -3,12 +3,14 @@ extern crate ansi_term;
 extern crate ardite;
 #[macro_use]
 extern crate clap;
-extern crate inflector;
+extern crate inflections;
 extern crate iron;
 extern crate logger;
 #[macro_use]
 extern crate mime;
+extern crate urlencoded;
 
+mod case;
 mod resource;
 mod server;
 
@@ -16,13 +18,13 @@ use std::path::PathBuf;
 
 use ansi_term::Colour::Red;
 use ansi_term::Style;
-use ardite::case::Case;
 use ardite::Service;
 use clap::{App, Arg};
 use clap::AppSettings::UnifiedHelpMessage;
 use iron::{Iron, Chain, Url};
 use logger::Logger;
 
+use case::Case;
 use server::Server;
 
 macro_rules! handle_err {
@@ -50,7 +52,7 @@ fn main() {
       Arg::with_name("hostname").long("hostname").short("n").takes_value(true).default_value("localhost").value_name("STRING").help("The host name that the server will listen on"),
       Arg::with_name("port").long("port").short("p").takes_value(true).default_value("3001").value_name("PORT").help("The port that the server will listen on"),
       Arg::with_name("mount").long("mount").short("m").takes_value(true).value_name("URL").help("All reported URLs will use the provided URL as their root"),
-      Arg::with_name("case").long("case").short("c").takes_value(true).possible_values(&["camel", "snake", "kebab", "class", "screaming", "same"]).default_value("kebab").value_name("CASE").help("The default case that the API will use, may be overrided with the `Prefer` header")
+      Arg::with_name("case").long("case").short("c").takes_value(true).possible_values(&["camel", "pascal", "kebab", "train", "snake", "constant"]).default_value("kebab").value_name("CASE").help("The default case that the API will use, may be overrided with the `Prefer` header")
     ])
     .get_matches()
   };

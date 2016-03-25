@@ -2,21 +2,14 @@
 name = "ardite-rest"
 version = "0.1.0"
 dependencies = [
- "Inflector 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ansi_term 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "ardite 0.0.1",
  "clap 2.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "inflections 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "iron 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "logger 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "mime 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "Inflector"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "regex 0.1.58 (registry+https://github.com/rust-lang/crates.io-index)",
+ "urlencoded 0.2.1 (git+https://github.com/calebmer/urlencoded.git)",
 ]
 
 [[package]]
@@ -36,7 +29,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "ardite"
 version = "0.0.1"
 dependencies = [
- "Inflector 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "inflections 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 0.1.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "linear-map 1.0.0 (git+https://github.com/calebmer/linear-map)",
  "regex 0.1.58 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -50,6 +43,18 @@ dependencies = [
 name = "bitflags"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "bodyparser"
+version = "0.2.0"
+source = "git+https://github.com/calebmer/body-parser.git#466cf7746bd177d1694c1bfdf802de31c730ebad"
+dependencies = [
+ "iron 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "persistent 0.0.9 (git+https://github.com/calebmer/persistent)",
+ "plugin 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "clap"
@@ -121,6 +126,11 @@ dependencies = [
  "unicase 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "url 0.5.7 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "inflections"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "iron"
@@ -227,6 +237,15 @@ version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "libc 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "persistent"
+version = "0.0.9"
+source = "git+https://github.com/calebmer/persistent#a7d5e9cfc4fd2deabe8a42ad6fe38b9579a0907f"
+dependencies = [
+ "iron 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "plugin 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -397,6 +416,17 @@ dependencies = [
  "unicode-bidi 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-normalization 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "urlencoded"
+version = "0.2.1"
+source = "git+https://github.com/calebmer/urlencoded.git#6d7e923c05b2990c457f279821a542ec54eb82d5"
+dependencies = [
+ "bodyparser 0.2.0 (git+https://github.com/calebmer/body-parser.git)",
+ "iron 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "plugin 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "url 0.5.7 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

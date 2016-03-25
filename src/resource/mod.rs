@@ -1,18 +1,23 @@
 pub mod root;
+pub mod type_;
 
 use ardite::Service;
 use ardite::error::{Error, MethodNotAllowed};
 use ardite::schema::Definition;
 use ardite::value::Value;
 use iron::Url;
+use urlencoded::QueryMap;
 
 /// Abstracts routes away into resources. This trait also doesn’t handle
 /// `Request`/`Response` objects, rather it only handles an abstracted
 /// interface. This helps with compliance to the Uniform Interface constraint.
 pub trait Resource {
-  fn route(&self, _: &Definition, _: String) -> Option<Box<Resource>> {
+  fn route<'a>(&self, _: &'a Definition, _: String) -> Option<Box<Resource + 'a>> {
     None
   }
+
+  /// Modify self using the query.
+  fn query(&mut self, _: &QueryMap) {}
 
   fn get(&self, _: &Fn(Vec<String>) -> Url, _: &Service) -> Result<Value, Error> {
     Err(Error::new(MethodNotAllowed, "Cannot perform a GET request to this resource."))

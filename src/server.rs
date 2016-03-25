@@ -1,13 +1,15 @@
-use ardite::Service;
-use ardite::case::{Case, Kebab, Same};
+use ardite::{Service, Value};
 use ardite::error::{Error, MethodNotAllowed};
+use inflections::Inflect;
 use iron::prelude::*;
 use iron::headers::{ContentType, ContentLength};
 use iron::method;
 use iron::modifiers::Header;
 use iron::status::Status;
 use iron::{Handler, Url};
+use urlencoded::{UrlEncodedQuery, EmptyQuery};
 
+use case::Case;
 use resource::Resource;
 use resource::root::Root;
 
@@ -18,26 +20,28 @@ pub struct Server {
 }
 
 impl Server {
-  fn route(&self, path: Vec<String>) -> Option<Box<Resource>> {
+  fn route<'a>(&'a self, path: Vec<String>) -> Option<Box<Resource + 'a>> {
     path.into_iter().fold(Some(Box::new(Root)), |opt_resource, part| {
-      opt_resource.and_then(|resource| resource.route(&self.service.definition(), part))
+      if part.is_kebab_case() {
+        opt_resource.and_then(|resource| resource.route(self.service.definition(), part))
+      } else {
+        None
+      }
     })
   }
 
   fn create_url(&self, path: Vec<String>) -> Url {
     let mut url = self.root_url.clone();
     for part in path {
-      url.path.push(Kebab.to_case(part));
+      url.path.push(part.to_kebab_case());
     }
     url
   }
-}
 
-impl Handler for Server {
-  fn handle(&self, req: &mut Request) -> IronResult<Response> {
+  /// Handles taking a request and turning it into a `Result<Value, Error>.`
+  fn handle(&self, req: &mut Request) -> Result<Value, Error> {
     let mut path = req.url.path.clone();
     let create_url = &|path| self.create_url(path);
-    let case = &self.default_case;
 
     // URLs like `google.com`, or `google.com/` have a path of `vec![""]`. We
     // would rather interpret this as the root path or `vec![]`.
@@ -45,29 +49,47 @@ impl Handler for Server {
       path = vec![];
     }
 
-    let resource = self.route(path);
+    match self.route(path) {
+      Some(mut resource) => {
+        // Get the query parameters and mutate the resource with it.
+        match req.get_ref::<UrlEncodedQuery>() {
+          Ok(ref query) => { resource.query(query); },
+          Err(ref error) => {
+            match error {
+              &EmptyQuery => {},
+              error @ _ => { return Err(Error::invalid(format!("{}", error), "Try fixing your query syntax.")); }
+            };
+          }
+        };
 
-    let result = match resource {
-      Some(resource) => match &req.method {
-        &method::Get => resource.get(create_url, &self.service),
-        &method::Post => resource.post(create_url, &self.service),
-        &method::Put => resource.put(create_url, &self.service),
-        &method::Patch => resource.patch(create_url, &self.service),
-        &method::Delete => resource.delete(create_url, &self.service),
-        method @ _ => Err(
-          Error::new(MethodNotAllowed, format!("Cannot perform a {} request on any resource in this API.", method))
-          .set_hint("Try a HEAD, GET, POST, PUT, PATCH, or DELETE request instead.")
-        )
+        match &req.method {
+          &method::Get => resource.get(create_url, &self.service),
+          &method::Post => resource.post(create_url, &self.service),
+          &method::Put => resource.put(create_url, &self.service),
+          &method::Patch => resource.patch(create_url, &self.service),
+          &method::Delete => resource.delete(create_url, &self.service),
+          method @ _ => Err(
+            Error::new(MethodNotAllowed, format!("Cannot perform a {} request on any resource in this API.", method))
+            .set_hint("Try a HEAD, GET, POST, PUT, PATCH, or DELETE request instead.")
+          )
+        }
       },
       None => Err(
         Error::not_found(format!("Resource '{}' not found.", self.create_url(req.url.path.clone())))
         .set_hint("Check the root resource for available top level paths.")
       )
-    };
+    }
+  }
+}
 
-    match result {
+impl Handler for Server {
+  /// Handles taking a `Result<Value, Error>` and turning it into an `IronResult<Response>`.
+  fn handle(&self, req: &mut Request) -> IronResult<Response> {
+    let case = &self.default_case;
+
+    match self.handle(req) {
       Ok(value) => {
-        let mut content = if case == &Same { value } else { value.keys_to_case(case) }.to_json_pretty().unwrap();
+        let mut content = value_keys_to_case(value, case).to_json_pretty().unwrap();
         content.push_str("\n");
 
         let mut res = Response::new();
@@ -96,5 +118,12 @@ impl Handler for Server {
         })
       }
     }
+  }
+}
+
+fn value_keys_to_case(value: Value, case: &Case) -> Value {
+  match value {
+    value @ Value::Array(_) => value.map_values(|value| value_keys_to_case(value, case)),
+    value @ _ => value.map_entries(|(key, value)| (case.to_case(&key), value_keys_to_case(value, case)))
   }
 }
