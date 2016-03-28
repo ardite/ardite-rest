@@ -40,6 +40,7 @@ impl Server {
   }
 
   /// Handles taking a request and turning it into a `Result<Value, Error>.`
+  // TODO: Combine this with the `Handler` implementation.
   fn handle(&self, req: &mut Request) -> Result<Data, Error> {
     let mut path = req.url.path.clone();
     let create_url = &|path| self.create_url(path);
@@ -66,6 +67,7 @@ impl Server {
       }
     };
 
+    // TODO: `Allow` header.
     match &req.method {
       &method::Get => resource.get(create_url, &self.service),
       &method::Post => resource.post(create_url, &self.service),
@@ -80,9 +82,26 @@ impl Server {
   }
 }
 
+// TODO: Combine this with the `Server` handle method.
 impl Handler for Server {
   /// Handles taking a `Result<Value, Error>` and turning it into an `IronResult<Response>`.
   fn handle(&self, req: &mut Request) -> IronResult<Response> {
+    // Allows users to ping the server.
+    // TODO: *Only* try to use this after we can’t find any other `Resource`
+    // to serve this request.
+    if req.method == method::Options && req.url.path == vec![""] {
+      use iron::headers::*;
+      use iron::method::*;
+      return Ok(
+        Response::new()
+        .set(Status::Ok)
+        // TODO: `Allow` header isn’t actually accurate for every resource…
+        // consider automating `OPTIONS` for every `Resource` which is always
+        // accurate.
+        .set(Header(Allow(vec![Get, Post, Put, Patch, Delete, Options])))
+      );
+    }
+
     let case = &self.default_case;
 
     match self.handle(req) {
