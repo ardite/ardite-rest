@@ -76,7 +76,7 @@ impl Server {
       &method::Delete => resource.delete(create_url, &self.service),
       method @ _ => Err(
         Error::new(MethodNotAllowed, format!("Cannot perform a {} request on any resource in this API.", method))
-        .set_hint("Try a HEAD, GET, POST, PUT, PATCH, or DELETE request instead.")
+        .set_hint("Try an OPTIONS request to see what other methods you can use.")
       )
     }
   }
@@ -89,7 +89,7 @@ impl Handler for Server {
     // Allows users to ping the server.
     // TODO: *Only* try to use this after we can’t find any other `Resource`
     // to serve this request.
-    if req.method == method::Options && req.url.path == vec![""] {
+    if req.method == method::Options {
       use iron::headers::*;
       use iron::method::*;
       return Ok(
