@@ -1,0 +1,12 @@
+types:
+  person:
+    type: object
+    properties:
+      name:
+        type: string
+
+  post:
+    type: object
+    properties:
+      headline:
+        type: string
