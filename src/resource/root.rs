@@ -11,8 +11,9 @@ pub struct Root;
 
 impl Resource for Root {
   fn route<'a>(&self, definition: &'a Definition, next: String) -> Option<Box<Resource + 'a>> {
-    if let Some(ref collection) = definition.get_collection(&next.to_snake_case()) {
-      Some(Box::new(Collection::new(collection)))
+    let name = next.to_snake_case();
+    if definition.get_collection(&name).is_some() {
+      Some(Box::new(Collection::new(name)))
     } else {
       None
     }

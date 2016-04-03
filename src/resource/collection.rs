@@ -1,19 +1,27 @@
-use ardite::schema;
+use ardite::{Error, Service};
+use iron::Url;
 
-use resource::Resource;
+use resource::{Resource, Data};
 
-pub struct Collection<'a> {
-  collection: &'a schema::Collection
+pub struct Collection {
+  name: String
 }
 
-impl<'a> Collection<'a> {
-  pub fn new(collection: &'a schema::Collection) -> Self {
+impl Collection {
+  pub fn new(name: String) -> Self {
     Collection {
-      collection: collection
+      name: name
     }
   }
 }
 
-impl<'a> Resource for Collection<'a> {
-
+impl Resource for Collection {
+  fn get(&self, _: &Fn(Vec<String>) -> Url, service: &Service) -> Result<Data, Error> {
+    service.read(
+      &self.name,
+      Default::default(),
+      Default::default(),
+      Default::default()
+    ).map(Data::Stream)
+  }
 }

@@ -32,7 +32,7 @@ macro_rules! handle_err {
     match $expr {
       Ok(value) => value,
       Err(error) => {
-        println!("{} {}\n", Red.bold().paint("Error:"), error);
+        println!("{}\n{}\n", Red.bold().paint("Error:"), error);
         std::process::exit(1);
       }
     }
@@ -58,12 +58,15 @@ fn main() {
   };
 
   let schema_path = PathBuf::from(matches.value_of("schema").unwrap());
-  let service = handle_err!(Service::from_file(schema_path.clone()));
+  let mut service = handle_err!(Service::from_file(schema_path.clone()));
 
   println!(
     "Loaded schema from {}",
     Style::new().underline().paint(format!("{}", schema_path.display()))
   );
+
+  // Connect the drivers…
+  handle_err!(service.connect_drivers());
 
   let mount_url = matches.value_of("mount").map(|url| handle_err!(Url::parse(url)));
 

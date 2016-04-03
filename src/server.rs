@@ -15,7 +15,7 @@ use resource::{Resource, Data};
 use resource::root::Root;
 
 pub struct Server {
-  pub service: Service<'static>,
+  pub service: Service,
   pub root_url: Url,
   pub default_case: Case
 }
