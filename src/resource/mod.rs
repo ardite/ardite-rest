@@ -1,5 +1,5 @@
 pub mod root;
-pub mod type_;
+pub mod collection;
 
 use ardite::Service;
 use ardite::error::{Error, MethodNotAllowed};

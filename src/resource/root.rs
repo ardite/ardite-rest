@@ -5,14 +5,14 @@ use inflections::Inflect;
 use iron::Url;
 
 use resource::{Resource, Data};
-use resource::type_::Type;
+use resource::collection::Collection;
 
 pub struct Root;
 
 impl Resource for Root {
   fn route<'a>(&self, definition: &'a Definition, next: String) -> Option<Box<Resource + 'a>> {
-    if let Some(ref type_) = definition.get_type(&next.to_snake_case()) {
-      Some(Box::new(Type::new(type_)))
+    if let Some(ref collection) = definition.get_collection(&next.to_snake_case()) {
+      Some(Box::new(Collection::new(collection)))
     } else {
       None
     }
@@ -25,7 +25,7 @@ impl Resource for Root {
   fn get(&self, create_url: &Fn(Vec<String>) -> Url, service: &Service) -> Result<Data, Error> {
     let mut object = Object::new();
 
-    for (name, _) in service.types() {
+    for (name, _) in service.collections() {
       let mut key = name.clone();
       key.push_str("_collection_url");
       let value = value!(format!("{}", create_url(vec![name.clone()])));
